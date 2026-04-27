@@ -10,18 +10,41 @@ class MenuScreen extends StatelessWidget {
   Future<void> placeOrder(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("You must be logged in to order.")),
-      );
-      return;
+    if (user == null) return;
+
+    final driversSnapshot =
+        await FirebaseFirestore.instance.collection('drivers').get();
+
+    String? assignedDriver;
+    double bestScore = double.infinity;
+    String explanation = "";
+
+    for (var doc in driversSnapshot.docs) {
+      final data = doc.data();
+
+      if (data['available'] == true) {
+        double distance = (data['distance'] ?? 100).toDouble();
+
+        // 🔥 scoring logic
+        double score = distance;
+
+        if (score < bestScore) {
+          bestScore = score;
+          assignedDriver = doc.id;
+          explanation = "Selected driver ${doc.id} with distance $distance";
+        }
+      }
     }
 
-    final docRef = await FirebaseFirestore.instance.collection('orders').add({
+    final orderRef =
+        await FirebaseFirestore.instance.collection('orders').add({
       'userId': user.uid,
       'item': 'Burger',
       'price': 10,
       'status': 'placed',
+      'driverId': assignedDriver,
+      'score': bestScore,
+      'explanation': explanation,
       'createdAt': Timestamp.now(),
     });
 
@@ -30,7 +53,7 @@ class MenuScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => OrderTrackingScreen(orderId: docRef.id),
+        builder: (_) => OrderTrackingScreen(orderId: orderRef.id),
       ),
     );
   }
@@ -38,9 +61,7 @@ class MenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Menu"),
-      ),
+      appBar: AppBar(title: const Text("Menu")),
       body: Column(
         children: [
           const ListTile(
