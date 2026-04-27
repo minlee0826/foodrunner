@@ -17,6 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  String selectedRole = 'customer'; // 👈 NEW
+
   // 🔥 Navigate based on role
   Future<void> goToRoleScreen(String uid) async {
     final doc =
@@ -29,17 +31,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (role == 'driver') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => DriverDashboardScreen()),
+        MaterialPageRoute(
+          builder: (_) => const DriverDashboardScreen(),
+        ),
       );
     } else if (role == 'restaurant') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => RestaurantDashboardScreen()),
+        MaterialPageRoute(
+          builder: (_) => const RestaurantDashboardScreen(),
+        ),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const CustomerHomeScreen()),
+        MaterialPageRoute(
+          builder: (_) => const CustomerHomeScreen(),
+        ),
       );
     }
   }
@@ -75,14 +83,15 @@ class _LoginScreenState extends State<LoginScreen> {
           .doc(userCredential.user!.uid)
           .set({
         'email': emailController.text.trim(),
-        'role': 'customer', // default role
+        'role': selectedRole, // 👈 use selected role
         'createdAt': Timestamp.now(),
       });
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account created as customer!")),
+        SnackBar(
+            content: Text("Account created as $selectedRole!")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,6 +126,25 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: const InputDecoration(labelText: "Password"),
               obscureText: true,
             ),
+
+            const SizedBox(height: 10),
+
+            // 🔥 ROLE DROPDOWN
+            DropdownButtonFormField<String>(
+              value: selectedRole,
+              decoration: const InputDecoration(labelText: "Select Role"),
+              items: const [
+                DropdownMenuItem(value: 'customer', child: Text('Customer')),
+                DropdownMenuItem(value: 'driver', child: Text('Driver')),
+                DropdownMenuItem(value: 'restaurant', child: Text('Restaurant')),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  selectedRole = value!;
+                });
+              },
+            ),
+
             const SizedBox(height: 20),
 
             ElevatedButton(
