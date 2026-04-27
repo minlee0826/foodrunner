@@ -1,8 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../customer/customer_home_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  Future<void> login() async {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const CustomerHomeScreen(),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login failed: $e")),
+      );
+    }
+  }
+
+  Future<void> register() async {
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Account created! Now login")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Register failed: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,24 +58,25 @@ class LoginScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const TextField(
-              decoration: InputDecoration(labelText: "Email"),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(labelText: "Email"),
             ),
-            const TextField(
-              decoration: InputDecoration(labelText: "Password"),
+            TextField(
+              controller: passwordController,
+              decoration: const InputDecoration(labelText: "Password"),
               obscureText: true,
             ),
             const SizedBox(height: 20),
+
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CustomerHomeScreen(),
-                  ),
-                );
-              },
+              onPressed: login,
               child: const Text("Login"),
+            ),
+
+            TextButton(
+              onPressed: register,
+              child: const Text("Create Account"),
             ),
           ],
         ),
