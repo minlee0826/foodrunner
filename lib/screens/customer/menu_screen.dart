@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
-import 'cart_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
+
+  Future<void> placeOrder() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    await FirebaseFirestore.instance.collection('orders').add({
+      'userId': user!.uid,
+      'item': 'Burger',
+      'price': 10,
+      'status': 'placed',
+      'createdAt': Timestamp.now(),
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,17 +23,18 @@ class MenuScreen extends StatelessWidget {
       appBar: AppBar(title: const Text("Menu")),
       body: Column(
         children: [
-          ListTile(title: const Text("Burger - \$10")),
+          const ListTile(
+            title: Text("Burger - \$10"),
+          ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const CartScreen(),
-                ),
+            onPressed: () async {
+              await placeOrder();
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Order placed!")),
               );
             },
-            child: const Text("Go to Cart"),
+            child: const Text("Order Burger"),
           ),
         ],
       ),
