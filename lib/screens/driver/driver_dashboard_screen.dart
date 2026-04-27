@@ -17,16 +17,20 @@ class DriverDashboardScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const DriverMapScreen(),
-                ),
-              );
-            },
-            child: const Text("Open Map"),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const DriverMapScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.map),
+              label: const Text("Open Driver Map"),
+            ),
           ),
 
           Expanded(
@@ -49,7 +53,9 @@ class DriverDashboardScreen extends StatelessWidget {
                 final orders = snapshot.data!.docs;
 
                 if (orders.isEmpty) {
-                  return const Center(child: Text("No assigned orders"));
+                  return const Center(
+                    child: Text("No assigned orders"),
+                  );
                 }
 
                 return ListView.builder(
@@ -64,22 +70,44 @@ class DriverDashboardScreen extends StatelessWidget {
                     final explanation = data['explanation'] ?? '';
 
                     return Card(
+                      elevation: 5,
                       margin: const EdgeInsets.all(10),
-                      child: ListTile(
-                        title: Text(item),
-                        subtitle: Text(
-                          "Status: $status\nScore: $score\n$explanation",
-                        ),
-                        trailing: ElevatedButton(
-                          onPressed: () async {
-                            await FirebaseFirestore.instance
-                                .collection('orders')
-                                .doc(order.id)
-                                .update({
-                              'status': 'picked_up',
-                            });
-                          },
-                          child: const Text("Pick Up"),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text("Status: $status"),
+                            Text("Assignment Score: $score"),
+                            const SizedBox(height: 8),
+                            Text(
+                              explanation,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () async {
+                                await FirebaseFirestore.instance
+                                    .collection('orders')
+                                    .doc(order.id)
+                                    .update({
+                                  'status': 'picked_up',
+                                });
+                              },
+                              child: const Text("Pick Up"),
+                            ),
+                          ],
                         ),
                       ),
                     );
