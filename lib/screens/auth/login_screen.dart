@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../customer/customer_home_screen.dart';
+import '../driver/driver_dashboard_screen.dart';
+import '../restaurant/restaurant_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,21 +17,43 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  // 🔥 Navigate based on role
+  Future<void> goToRoleScreen(String uid) async {
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    final role = doc.data()?['role'] ?? 'customer';
+
+    if (!mounted) return;
+
+    if (role == 'driver') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => DriverDashboardScreen()),
+      );
+    } else if (role == 'restaurant') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => RestaurantDashboardScreen()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const CustomerHomeScreen()),
+      );
+    }
+  }
+
+  // 🔐 Login
   Future<void> login() async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const CustomerHomeScreen(),
-        ),
-      );
+      await goToRoleScreen(userCredential.user!.uid);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Login failed: $e")),
@@ -37,9 +61,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // 🆕 Register
   Future<void> register() async {
     try {
-      UserCredential userCredential =
+      final userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
@@ -50,14 +75,14 @@ class _LoginScreenState extends State<LoginScreen> {
           .doc(userCredential.user!.uid)
           .set({
         'email': emailController.text.trim(),
-        'role': 'customer',
+        'role': 'customer', // default role
         'createdAt': Timestamp.now(),
       });
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account created successfully!")),
+        const SnackBar(content: Text("Account created as customer!")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -85,22 +110,20 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             TextField(
               controller: emailController,
-              decoration: const InputDecoration(
-                labelText: "Email",
-              ),
+              decoration: const InputDecoration(labelText: "Email"),
             ),
             TextField(
               controller: passwordController,
-              decoration: const InputDecoration(
-                labelText: "Password",
-              ),
+              decoration: const InputDecoration(labelText: "Password"),
               obscureText: true,
             ),
             const SizedBox(height: 20),
+
             ElevatedButton(
               onPressed: login,
               child: const Text("Login"),
             ),
+
             TextButton(
               onPressed: register,
               child: const Text("Create Account"),
