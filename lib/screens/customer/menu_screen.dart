@@ -2,38 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'order_tracking_screen.dart';
+
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
 
-  Future<void> placeOrder() async {
+  Future<void> placeOrder(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
 
-    await FirebaseFirestore.instance.collection('orders').add({
-      'userId': user!.uid,
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You must be logged in to order.")),
+      );
+      return;
+    }
+
+    final docRef = await FirebaseFirestore.instance.collection('orders').add({
+      'userId': user.uid,
       'item': 'Burger',
       'price': 10,
       'status': 'placed',
       'createdAt': Timestamp.now(),
     });
+
+    if (!context.mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrderTrackingScreen(orderId: docRef.id),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Menu")),
+      appBar: AppBar(
+        title: const Text("Menu"),
+      ),
       body: Column(
         children: [
           const ListTile(
-            title: Text("Burger - \$10"),
+            title: Text("Burger"),
+            subtitle: Text("\$10"),
           ),
           ElevatedButton(
-            onPressed: () async {
-              await placeOrder();
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Order placed!")),
-              );
-            },
+            onPressed: () => placeOrder(context),
             child: const Text("Order Burger"),
           ),
         ],
