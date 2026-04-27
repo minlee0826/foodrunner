@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "608542025638",
+    "project_id": "food-runner-minlee",
+    "storage_bucket": "food-runner-minlee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:608542025638:android:caea67f4e49b79988d9167",
+        "android_client_info": {
+          "package_name": "com.example.food_runner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCln4Yha-HbuZDIIPO3dMWW61eN6BPKeYg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
