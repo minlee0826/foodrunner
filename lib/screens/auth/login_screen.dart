@@ -26,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final role = doc.data()?['role'] ?? 'customer';
 
+    print('User role from Firestore: $role'); // 👈 Add this debug print
+
     if (!mounted) return;
 
     if (role == 'driver') {

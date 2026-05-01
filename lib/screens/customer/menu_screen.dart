@@ -5,9 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'order_tracking_screen.dart';
 
 class MenuScreen extends StatelessWidget {
-  const MenuScreen({super.key});
+  final String restaurantId;
 
-  Future<void> placeOrder(BuildContext context) async {
+  const MenuScreen({super.key, required this.restaurantId});
+
+  Future<void> placeOrder(BuildContext context, String item, double price) async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) return;
@@ -39,8 +41,9 @@ class MenuScreen extends StatelessWidget {
     final orderRef =
         await FirebaseFirestore.instance.collection('orders').add({
       'userId': user.uid,
-      'item': 'Burger',
-      'price': 10,
+      'restaurantId': restaurantId,
+      'item': item,
+      'price': price,
       'status': 'placed',
       'driverId': assignedDriver,
       'score': bestScore,
@@ -62,17 +65,48 @@ class MenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Menu")),
-      body: Column(
-        children: [
-          const ListTile(
-            title: Text("Burger"),
-            subtitle: Text("\$10"),
-          ),
-          ElevatedButton(
-            onPressed: () => placeOrder(context),
-            child: const Text("Order Burger"),
-          ),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('restaurants')
+            .doc(restaurantId)
+            .collection('menu')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Error loading menu'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final menuItems = snapshot.data?.docs ?? [];
+
+          if (menuItems.isEmpty) {
+            return const Center(
+              child: Text('No menu items available'),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: menuItems.length,
+            itemBuilder: (context, index) {
+              final item = menuItems[index];
+              final data = item.data() as Map<String, dynamic>;
+              final name = data['name'] ?? 'Unknown Item';
+              final price = (data['price'] ?? 0).toDouble();
+
+              return ListTile(
+                title: Text(name),
+                subtitle: Text('\$${price.toStringAsFixed(2)}'),
+                trailing: ElevatedButton(
+                  onPressed: () => placeOrder(context, name, price),
+                  child: const Text("Order"),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
